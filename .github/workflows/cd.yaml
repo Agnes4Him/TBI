@@ -1,0 +1,61 @@
+name: Project-CD
+on:
+  push:
+    branches:
+      - 'main'
+env:
+  ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
+  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+  IMAGE_TAG: ${{github.sha }}
+jobs:
+  build-push-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: "us-east-1"
+
+      # Build-Push
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image-step
+        working-directory: "serving/api"
+        env:
+          ECR_REGISTRY: $ECR_REGISTRY
+          ECR_REPOSITORY: $ECR_REPOSITORY
+          IMAGE_TAG: $IMAGE_TAG
+        run: |
+          docker build -t ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG} .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "::set-output name=image_uri::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+      - name: Update Docker in Terraform
+        run: |
+          sed -i "s/docker run -d nginx: .*/docker run -p 4000:4000 -d $image_uri/g" $GITHUB_WORKSPACE/.github/iac/modules/compute/main.tf
+
+      - uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_wrapper: false
+
+      # Define the infrastructure
+      - name: TF plan
+        id: tf-plan
+        working-directory: 'iac/production'
+        run: |
+          terraform init && terraform plan
+
+      - name: TF Apply
+        id: tf-apply
+        working-directory: 'iac/production'
+        if: ${{ steps.tf-plan.outcome }} == 'success'
+        run: |
+          terraform apply -auto-approve

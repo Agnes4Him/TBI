@@ -1,0 +1,13 @@
+# Local .terraform directories
+iac/*/.terraform/*
+
+# Terraform variable files with sensitive data
+iac/*/*.tfvars
+iac/*/*.tfvars.json
+
+# State files and backups
+iac/*/terraform.tfstate
+iac/*/terraform.tfstate.*
+
+# Terraform plan output
+iac/*/*.tfplan

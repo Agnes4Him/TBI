@@ -13,6 +13,11 @@ api = HfApi()
 api.set_access_token(HF_API_TOKEN)
 org_name = 'ML Demos'
 
+headers = {
+    "Authorization": f"Bearer {HF_API_TOKEN}",
+    "Content-Type": "application/json"
+}
+
 @app.route('/')
 def ping():
     return ('Hello from TBI API')
@@ -20,22 +25,38 @@ def ping():
 @app.route('/completion', methods=['POST'])
 def completion():
     try:
-        data = request.json()
+        data = request.get_json()
         if not data:
             raise ValueError("Missing data in request body")
         return jsonify({
             "status": "success",
             "response": [ {"role": "assistant", "message": "response"} ]
         })
-    except:
+    except Exception as e:
         return jsonify({
             "status": "error",
-            "message": "error message"
+            "message": str(e)
         })
 
 @app.route('/status', methods=['GET'])
 def get_status():
-    pass
+    try:
+        model_name = request.get_json()
+        endpoint_name = f"{org_name}/{model_name}"
+        response = requests.get(
+            f"https://api.endpoints.huggingface.cloud/v1/endpoints/{endpoint_name}",
+            headers=headers
+        )
+
+        result = response.json()
+        #print(f"Status: {result['status']}")
+        return jsonify({
+            "status": result['status']
+        })
+    except Exception as e:
+        return jsonify({
+            "message": str(e)
+        })
 
 @app.route('/model', methods=['GET'])
 def get_model():
@@ -51,15 +72,43 @@ def get_model():
             "status": "success",
             "result": result
         })
-    except:
-        pass
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        })
 
 @app.route('/model', methods=['POST'])
 def post_model():
-    headers = {
-        "Authorization": f"Bearer {HF_API_TOKEN}",
-        "Content-Type": "application/json"
-    }
+    try:
+        pass
+        model_name = request.get_json()
+
+        endpoint_payload = {
+            "provider": "aws",
+            "region": "us-east-1",
+            "instance_type": "ml.m5.large",
+            "scaling": {"min_replicas": 1, "max_replicas": 1},
+            "task": model_name,
+            "model": f"{org_name}/{model_name}"
+        }
+
+        response = requests.post(
+            "https://api.endpoints.huggingface.cloud/v1/endpoints",
+            headers=headers,
+            json=endpoint_payload
+        )
+        #print(response.json())
+
+        return jsonify({
+            "status": "success",
+            "model_id": model_name
+        })
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        })
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=4000)

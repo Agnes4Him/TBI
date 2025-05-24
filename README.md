@@ -9,6 +9,8 @@ They are also automatically scaled up or down by an autoscaling group, based on 
 A launch template is used to deploy an inital Nginx Docker container as a placeholder within the instances.
 This is to be replaced later by the GitHub Actions CI/CD pipeline.
 
+The `Architectural design` for the task can be found in this repository at `images/TBI.png`.
+
 ## API
 The API is built using Python flask, and within a virtual environment. The environment is activated using pipenv and packages installed as follows:
 
@@ -33,7 +35,8 @@ python3 serving/api/model.py
 Access the application on `http://localhost:4000`
 
 ## CI/CD Pipeline
-This is used to provision infrastructures and deploy the API. 
+GitHub Actions is used for the pipeline.
+The pipeline is used to provision infrastructures and deploy the API (model serving App). 
 This pipeline contains two componenents: A continuous integration and deployment.
 
 The continuous integration validates the Terraform configurations, while the deployment pipeline runs testing on the API,

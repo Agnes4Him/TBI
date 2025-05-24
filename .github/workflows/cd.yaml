@@ -34,7 +34,7 @@ jobs:
           ECR_REPOSITORY: $ECR_REPOSITORY
           IMAGE_TAG: $IMAGE_TAG
         run: |
-          docker build -t ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG} .
+          docker build --build-arg HF_API_TOKEN=${{ secrets.HF_API_TOKEN }} -t ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG} .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "::set-output name=image_uri::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 

@@ -41,7 +41,8 @@ def completion():
 @app.route('/status', methods=['GET'])
 def get_status():
     try:
-        model_name = request.get_json()
+        req_body = request.get_json()
+        model_name = req_body['model_name']
         endpoint_name = f"{org_name}/{model_name}"
         response = requests.get(
             f"https://api.endpoints.huggingface.cloud/v1/endpoints/{endpoint_name}",
@@ -79,11 +80,10 @@ def get_model():
         })
 
 @app.route('/model', methods=['POST'])
-def post_model():
+def deploy_model():
     try:
-        pass
-        model_name = request.get_json()
-
+        req_body = request.get_json()
+        model_name = req_body['model_name']
         endpoint_payload = {
             "provider": "aws",
             "region": "us-east-1",

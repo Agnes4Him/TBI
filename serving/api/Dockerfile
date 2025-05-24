@@ -11,6 +11,10 @@ RUN pipenv install --system --deploy
 
 COPY [ "model.py", "./" ]
 
-EXPOSE 9696
+ARG HF_API_TOKEN
+
+ENV HF_API_TOKEN=$ARG
+
+EXPOSE 4000
 
 ENTRYPOINT [ "gunicorn", "model:app", "-b", "0.0.0.0:4000", "-w", "4" ]

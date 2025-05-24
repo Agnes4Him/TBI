@@ -1,11 +1,15 @@
 from flask import Flask, request, jsonify
 from huggingface_hub import HfApi
 import os
+import requests
 
 app = Flask(__name__)
 
-api = HfApi()
 HF_API_TOKEN = os.getenv('HF_API_TOKEN')
+if not HF_API_TOKEN:
+    raise EnvironmentError("HF_API_TOKEN is not set in environment variables.")
+
+api = HfApi()
 api.set_access_token(HF_API_TOKEN)
 org_name = 'ML Demos'
 
@@ -35,11 +39,27 @@ def get_status():
 
 @app.route('/model', methods=['GET'])
 def get_model():
-    pass
+    try:
+        result = []
+        each_model = {}
+        models = api.list_models(author=org_name)
+        for model in models:
+            #print(f"{model.modelId} | {model.private} | {model.tags}")
+            each_model["model_id"] = model.modelId
+        result.append(each_model)
+        return jsonify({
+            "status": "success",
+            "result": result
+        })
+    except:
+        pass
 
 @app.route('/model', methods=['POST'])
 def post_model():
-    pass
+    headers = {
+        "Authorization": f"Bearer {HF_API_TOKEN}",
+        "Content-Type": "application/json"
+    }
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=4000)

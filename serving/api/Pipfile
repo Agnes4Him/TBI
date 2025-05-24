@@ -7,9 +7,9 @@ name = "pypi"
 flask = "*"
 gunicorn = "*"
 huggingface_hub = "*"
+requests = "*"
 
 [dev-packages]
-requests = "*"
 pytest = "*"
 pylint = "*"
 
